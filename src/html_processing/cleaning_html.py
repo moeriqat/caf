@@ -4,10 +4,8 @@ from bs4 import BeautifulSoup
 import os
 from .table_processing import chain
 
-DATA_PATH = "src/data/fetched_html"
 OUTPUT_PATH ="src/data/cleaned_text"
 NUM_EXECUTORS = 4
-html_paths = [os.path.join(DATA_PATH, fname) for fname in os.listdir(DATA_PATH) if fname.endswith(".html")]
 
 tags_to_remove = [
         'script',       # JavaScript
@@ -61,11 +59,10 @@ def process_tables(tables, html_body, soup):
         table.replace_with(new_paragraph)
 
 def save_text(text, file_name):
-    print(os.path.join(OUTPUT_PATH, file_name))
     with open(os.path.join(OUTPUT_PATH, file_name), "w", encoding="utf-8") as f:
         f.write(text)
 
-for html_path in html_paths[:2]:
+def process_html_file(html_path):
     html_body, soup = read_html(html_path)
     clean_html(html_body)
     tables = fetch_tables(html_body)
@@ -73,3 +70,11 @@ for html_path in html_paths[:2]:
     text_html = html_body.get_text()
     output_name = html_path.split("\\")[-1].replace(".html", ".txt")
     save_text(text_html, output_name)
+
+def process_all_html_files(data_path):
+    html_paths = [os.path.join(data_path, fname) for fname in os.listdir(data_path) if fname.endswith(".html")]
+
+    with ProcessPoolExecutor(max_workers=NUM_EXECUTORS) as executor:
+        executor.map(process_html_file, html_paths)
+
+
